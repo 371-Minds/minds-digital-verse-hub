@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, GitBranch, Settings, Rocket, Code, Music, Briefcase, GameController2, Brain, GraduationCap, Scale, Database, BarChart3, Mail, Bot } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, FolderOpen, GitBranch, Settings, Rocket, Code, Music, Briefcase, Gamepad2, Brain, GraduationCap, Scale, Database, BarChart3, Mail, Bot } from 'lucide-react';
 
 interface Application {
   name: string;
@@ -67,7 +66,7 @@ const MonorepoStructure = () => {
     },
     {
       name: 'Games',
-      icon: GameController2,
+      icon: Gamepad2,
       color: 'bg-red-500',
       description: 'Interactive games and entertainment',
       applications: [
