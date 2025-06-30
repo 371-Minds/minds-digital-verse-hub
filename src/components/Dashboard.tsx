@@ -1,49 +1,46 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Building2, GitBranch, BarChart3 } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 import MonorepoStructure from './MonorepoStructure';
 import SetupStatus from './SetupStatus';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GitBranch, Settings, FolderTree, Rocket, BarChart3, Users } from 'lucide-react';
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto p-6">
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">
-            371 Minds Digital Empire
-          </h1>
-          <p className="text-xl text-gray-600">
-            Monorepo Management Dashboard - 40+ Applications
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Badge variant="outline" className="px-4 py-2">
-              <GitBranch className="h-4 w-4 mr-2" />
-              Monorepo Structure
-            </Badge>
-            <Badge variant="outline" className="px-4 py-2">
-              <Settings className="h-4 w-4 mr-2" />
-              Enterprise Scale
-            </Badge>
-            <Badge variant="outline" className="px-4 py-2">
-              <Rocket className="h-4 w-4 mr-2" />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-primary rounded-lg">
+              <Building2 className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">371 Minds Digital Empire</h1>
+              <p className="text-muted-foreground">Monorepo Management Dashboard</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Badge variant="outline" className="px-3 py-1">
+              <GitBranch className="h-3 w-3 mr-1" />
               Production Ready
             </Badge>
+            <ThemeToggle />
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Dashboard */}
         <Tabs defaultValue="structure" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="structure" className="flex items-center space-x-2">
-              <FolderTree className="h-4 w-4" />
+              <Building2 className="h-4 w-4" />
               <span>Monorepo Structure</span>
             </TabsTrigger>
             <TabsTrigger value="setup" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
               <span>Setup Progress</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center space-x-2">
@@ -52,69 +49,57 @@ const Dashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="structure" className="space-y-6">
+          <TabsContent value="structure">
             <MonorepoStructure />
           </TabsContent>
 
-          <TabsContent value="setup" className="space-y-6">
+          <TabsContent value="setup">
             <SetupStatus />
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-6">
+          <TabsContent value="analytics">
             <Card>
               <CardHeader>
-                <CardTitle>Analytics Dashboard</CardTitle>
-                <CardDescription>
-                  Comprehensive analytics and insights for your digital empire
-                </CardDescription>
+                <CardTitle>Development Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <Card className="border-l-4 border-l-blue-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Development Velocity</CardTitle>
+                      <CardTitle className="text-sm font-medium">Deployment Frequency</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">85%</div>
-                      <p className="text-xs text-muted-foreground">
-                        Average completion rate across all verticals
-                      </p>
+                      <div className="text-2xl font-bold">12/week</div>
+                      <p className="text-xs text-muted-foreground">+8% from last month</p>
                     </CardContent>
                   </Card>
-                  
-                  <Card className="border-l-4 border-l-green-500">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Code Quality Score</CardTitle>
+                      <CardTitle className="text-sm font-medium">Lead Time</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">92/100</div>
-                      <p className="text-xs text-muted-foreground">
-                        Automated code quality assessment
-                      </p>
+                      <div className="text-2xl font-bold">2.3 days</div>
+                      <p className="text-xs text-muted-foreground">-15% improvement</p>
                     </CardContent>
                   </Card>
-                  
-                  <Card className="border-l-4 border-l-purple-500">
+                  <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Infrastructure Health</CardTitle>
+                      <CardTitle className="text-sm font-medium">MTTR</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">98.5%</div>
-                      <p className="text-xs text-muted-foreground">
-                        System uptime and performance
-                      </p>
+                      <div className="text-2xl font-bold">45 min</div>
+                      <p className="text-xs text-muted-foreground">-22% from last month</p>
                     </CardContent>
                   </Card>
-                </div>
-                
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">Next Steps Recommendations</h3>
-                  <ul className="space-y-1 text-sm text-blue-800">
-                    <li>• Complete GitHub template repository setup</li>
-                    <li>• Configure shared dependencies and workspace settings</li>
-                    <li>• Set up automated deployment pipelines</li>
-                    <li>• Begin systematic application migration</li>
-                  </ul>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Change Failure Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">3.2%</div>
+                      <p className="text-xs text-muted-foreground">-1.1% improvement</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
