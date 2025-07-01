@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, GitBranch, BarChart3 } from 'lucide-react';
+import { Building2, GitBranch, BarChart3, Github } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import MonorepoStructure from './MonorepoStructure';
+import GitHubMonorepoStructure from './GitHubMonorepoStructure';
 import SetupStatus from './SetupStatus';
 
 const Dashboard = () => {
@@ -33,11 +34,15 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard */}
-        <Tabs defaultValue="structure" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="github" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="github" className="flex items-center space-x-2">
+              <Github className="h-4 w-4" />
+              <span>GitHub Repos</span>
+            </TabsTrigger>
             <TabsTrigger value="structure" className="flex items-center space-x-2">
               <Building2 className="h-4 w-4" />
-              <span>Monorepo Structure</span>
+              <span>Mock Structure</span>
             </TabsTrigger>
             <TabsTrigger value="setup" className="flex items-center space-x-2">
               <GitBranch className="h-4 w-4" />
@@ -48,6 +53,10 @@ const Dashboard = () => {
               <span>Analytics</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="github">
+            <GitHubMonorepoStructure />
+          </TabsContent>
 
           <TabsContent value="structure">
             <MonorepoStructure />
