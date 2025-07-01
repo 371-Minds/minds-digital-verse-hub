@@ -79,7 +79,7 @@ class BehavioralIntelligenceService {
         developerMap.set(key, {
           developerId: key,
           name: commit.author,
-          email: '', // Would need additional API call
+          email: '',
           totalCommits: 0,
           linesAdded: 0,
           linesDeleted: 0,
@@ -97,15 +97,27 @@ class BehavioralIntelligenceService {
       dev.lastActivity = new Date(commit.date) > new Date(dev.lastActivity) ? commit.date : dev.lastActivity;
     });
 
-    // Calculate engagement scores
+    // Calculate engagement scores and commit frequency
     developerMap.forEach(dev => {
       dev.engagementScore = this.calculateEngagementScore(dev);
+      dev.commitFrequency = this.calculateCommitFrequency(commits.filter(c => c.author === dev.name));
     });
 
     return Array.from(developerMap.values());
   }
 
   analyzeCommitPatterns(commits: Commit[]): CommitPattern {
+    if (commits.length === 0) {
+      return {
+        hourlyDistribution: new Array(24).fill(0),
+        weeklyDistribution: new Array(7).fill(0),
+        commitMessageQuality: 0,
+        averageTimeBetweenCommits: 0,
+        burstPatterns: false,
+        consistencyScore: 0
+      };
+    }
+
     const hourlyDist = new Array(24).fill(0);
     const weeklyDist = new Array(7).fill(0);
     
@@ -131,76 +143,81 @@ class BehavioralIntelligenceService {
   analyzeRepositoryHealth(repo: ProcessedRepo, commits: Commit[]): RepositoryHealth {
     const lastCommitAge = this.calculateLastCommitAge(commits);
     const activeDevelopers = this.countActiveDevelopers(commits);
-    const codeChurnRate = this.calculateCodeChurnRate(commits);
+    const healthScore = this.calculateHealthScore(repo, commits);
     
     return {
       repoName: repo.name,
       platform: repo.platform,
-      healthScore: this.calculateHealthScore(repo, commits),
+      healthScore,
       lastCommitAge,
       activeDevelopers,
-      codeChurnRate,
-      testCoverage: Math.random() * 100, // Mock data - would need real analysis
-      documentationScore: Math.random() * 100,
-      issueResolutionTime: Math.random() * 10,
-      technicalDebtScore: Math.random() * 100
+      codeChurnRate: this.calculateCodeChurnRate(commits),
+      testCoverage: this.estimateTestCoverage(repo, commits),
+      documentationScore: this.calculateDocumentationScore(repo, commits),
+      issueResolutionTime: this.calculateIssueResolutionTime(repo),
+      technicalDebtScore: this.calculateTechnicalDebtScore(repo, commits)
     };
   }
 
   detectSecurityPatterns(commits: Commit[]): SecurityMetrics {
     const suspiciousPatterns: string[] = [];
+    let secretsCount = 0;
     
     commits.forEach(commit => {
       const message = commit.message.toLowerCase();
-      if (message.includes('password') || message.includes('secret') || message.includes('key')) {
+      if (message.includes('password') || message.includes('secret') || message.includes('key') || message.includes('token')) {
         suspiciousPatterns.push('Potential secrets in commit messages');
+        secretsCount++;
       }
-      if (message.includes('bypass') || message.includes('disable security')) {
+      if (message.includes('bypass') || message.includes('disable security') || message.includes('skip validation')) {
         suspiciousPatterns.push('Security bypass attempts');
+      }
+      if (message.includes('hack') || message.includes('workaround') || message.includes('quick fix')) {
+        suspiciousPatterns.push('Potentially risky workarounds');
       }
     });
 
+    const vulnerabilityCount = this.detectVulnerabilityPatterns(commits);
+    
     return {
-      repoName: 'repository', // Would be passed in
+      repoName: 'repository',
       suspiciousPatterns: [...new Set(suspiciousPatterns)],
-      vulnerabilityCount: Math.floor(Math.random() * 10),
-      secretsExposed: Math.floor(Math.random() * 3),
-      dependencyRisk: Math.random() * 100,
+      vulnerabilityCount,
+      secretsExposed: secretsCount,
+      dependencyRisk: this.calculateDependencyRisk(commits),
       lastSecurityScan: new Date().toISOString(),
-      complianceScore: Math.random() * 100
+      complianceScore: this.calculateComplianceScore(commits, suspiciousPatterns.length)
     };
   }
 
   analyzeCollaborationSignals(commits: Commit[]): CollaborationSignals {
     const developers = new Set(commits.map(c => c.author));
-    const crossTeamContributions = developers.size > 1 ? 1 : 0;
+    const crossTeamContributions = this.calculateCrossTeamContributions(commits);
+    const knowledgeSharing = this.calculateKnowledgeSharing(commits);
     
     return {
       repoName: 'repository',
-      codeReviewParticipation: Math.random() * 100,
-      crossTeamContributions: crossTeamContributions * 100,
-      knowledgeSharing: Math.random() * 100,
-      mentorshipActivity: Math.random() * 100,
-      communicationFrequency: Math.random() * 100,
-      conflictResolution: Math.random() * 100
+      codeReviewParticipation: this.calculateCodeReviewParticipation(commits),
+      crossTeamContributions,
+      knowledgeSharing,
+      mentorshipActivity: this.calculateMentorshipActivity(commits),
+      communicationFrequency: this.calculateCommunicationFrequency(commits),
+      conflictResolution: this.calculateConflictResolution(commits)
     };
   }
 
-  analyzeTechnicalDebt(repo: ProcessedRepo): TechnicalDebtMetrics {
+  analyzeTechnicalDebt(repo: ProcessedRepo, commits: Commit[]): TechnicalDebtMetrics {
+    const refactoringOpportunities = this.identifyRefactoringOpportunities(commits);
+    
     return {
       repoName: repo.name,
-      codeComplexity: Math.random() * 100,
-      duplicateCode: Math.random() * 100,
-      outdatedDependencies: Math.floor(Math.random() * 20),
-      unusedCode: Math.random() * 100,
-      testDebt: Math.random() * 100,
-      documentationDebt: Math.random() * 100,
-      refactoringOpportunities: [
-        'Extract common utility functions',
-        'Reduce cyclomatic complexity',
-        'Update deprecated dependencies',
-        'Add missing unit tests'
-      ]
+      codeComplexity: this.calculateCodeComplexity(commits),
+      duplicateCode: this.detectDuplicateCode(commits),
+      outdatedDependencies: this.countOutdatedDependencies(commits),
+      unusedCode: this.detectUnusedCode(commits),
+      testDebt: this.calculateTestDebt(commits),
+      documentationDebt: this.calculateDocumentationDebt(commits),
+      refactoringOpportunities
     };
   }
 
@@ -213,6 +230,16 @@ class BehavioralIntelligenceService {
   private calculateRecencyScore(lastActivity: string): number {
     const daysSince = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
     return Math.max(0, 100 - daysSince * 2);
+  }
+
+  private calculateCommitFrequency(commits: Commit[]): number {
+    if (commits.length === 0) return 0;
+    
+    const sortedDates = commits.map(c => new Date(c.date).getTime()).sort();
+    const timeSpan = sortedDates[sortedDates.length - 1] - sortedDates[0];
+    const days = timeSpan / (1000 * 60 * 60 * 24);
+    
+    return days > 0 ? commits.length / days : 0;
   }
 
   private calculateAverageTimeBetweenCommits(commits: Commit[]): number {
@@ -230,6 +257,8 @@ class BehavioralIntelligenceService {
   }
 
   private analyzeCommitMessageQuality(commits: Commit[]): number {
+    if (commits.length === 0) return 0;
+    
     let qualityScore = 0;
     
     commits.forEach(commit => {
@@ -245,20 +274,22 @@ class BehavioralIntelligenceService {
       // No trailing period
       if (!message.endsWith('.')) score += 25;
       
-      // Contains meaningful words
-      if (!/^(fix|feat|chore|docs|style|refactor|test)/.test(message.toLowerCase())) {
-        if (message.split(' ').length > 2) score += 25;
-      } else {
+      // Contains meaningful words or follows conventional commit format
+      if (/^(fix|feat|chore|docs|style|refactor|test|perf|ci|build)(\(.+\))?:/.test(message.toLowerCase())) {
+        score += 25;
+      } else if (message.split(' ').length > 2) {
         score += 25;
       }
       
       qualityScore += score;
     });
     
-    return commits.length > 0 ? qualityScore / commits.length : 0;
+    return qualityScore / commits.length;
   }
 
   private detectBurstPatterns(commits: Commit[]): boolean {
+    if (commits.length < 3) return false;
+    
     const commitDates = commits.map(c => new Date(c.date).getTime()).sort();
     let burstCount = 0;
     
@@ -291,7 +322,7 @@ class BehavioralIntelligenceService {
   private calculateHealthScore(repo: ProcessedRepo, commits: Commit[]): number {
     const activityScore = Math.min(commits.length / 10, 1) * 30;
     const recencyScore = this.calculateRecencyScore(repo.lastUpdated) * 0.3;
-    const diversityScore = new Set(commits.map(c => c.author)).size * 10;
+    const diversityScore = Math.min(new Set(commits.map(c => c.author)).size * 10, 30);
     const issueScore = Math.max(0, 40 - repo.issues);
     
     return Math.min(100, activityScore + recencyScore + diversityScore + issueScore);
@@ -312,8 +343,224 @@ class BehavioralIntelligenceService {
   }
 
   private calculateCodeChurnRate(commits: Commit[]): number {
-    // Mock calculation - would need actual file change data
-    return Math.random() * 100;
+    if (commits.length === 0) return 0;
+    
+    // Estimate churn based on commit frequency and message patterns
+    const avgTimeBetween = this.calculateAverageTimeBetweenCommits(commits);
+    const burstCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('fix') || 
+      commit.message.toLowerCase().includes('bug')
+    ).length;
+    
+    const churnIndicator = (burstCommits / commits.length) * 100;
+    return Math.min(churnIndicator, 100);
+  }
+
+  private estimateTestCoverage(repo: ProcessedRepo, commits: Commit[]): number {
+    const testCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('test') ||
+      commit.message.toLowerCase().includes('spec') ||
+      commit.message.toLowerCase().includes('coverage')
+    ).length;
+    
+    return Math.min((testCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateDocumentationScore(repo: ProcessedRepo, commits: Commit[]): number {
+    const docCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('doc') ||
+      commit.message.toLowerCase().includes('readme') ||
+      commit.message.toLowerCase().includes('comment')
+    ).length;
+    
+    return Math.min((docCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateIssueResolutionTime(repo: ProcessedRepo): number {
+    // Estimate based on repository activity and issue count
+    if (repo.issues === 0) return 0;
+    
+    // Simple heuristic: more issues relative to activity suggests longer resolution times
+    const issueRatio = repo.issues / Math.max(repo.stars + repo.forks, 1);
+    return Math.min(issueRatio * 10, 30); // Cap at 30 days
+  }
+
+  private calculateTechnicalDebtScore(repo: ProcessedRepo, commits: Commit[]): number {
+    const fixCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('fix') ||
+      commit.message.toLowerCase().includes('bug') ||
+      commit.message.toLowerCase().includes('hotfix')
+    ).length;
+    
+    const debtIndicator = (fixCommits / Math.max(commits.length, 1)) * 100;
+    return Math.min(debtIndicator, 100);
+  }
+
+  private detectVulnerabilityPatterns(commits: Commit[]): number {
+    const vulnerabilityKeywords = ['security', 'vulnerability', 'exploit', 'patch', 'cve'];
+    return commits.filter(commit => 
+      vulnerabilityKeywords.some(keyword => 
+        commit.message.toLowerCase().includes(keyword)
+      )
+    ).length;
+  }
+
+  private calculateDependencyRisk(commits: Commit[]): number {
+    const dependencyCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('dependency') ||
+      commit.message.toLowerCase().includes('package') ||
+      commit.message.toLowerCase().includes('update') ||
+      commit.message.toLowerCase().includes('upgrade')
+    ).length;
+    
+    return Math.min((dependencyCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateComplianceScore(commits: Commit[], suspiciousPatternCount: number): number {
+    const baseScore = 100;
+    const penaltyPerPattern = 10;
+    return Math.max(0, baseScore - (suspiciousPatternCount * penaltyPerPattern));
+  }
+
+  private calculateCrossTeamContributions(commits: Commit[]): number {
+    const uniqueAuthors = new Set(commits.map(c => c.author)).size;
+    return Math.min(uniqueAuthors * 20, 100);
+  }
+
+  private calculateKnowledgeSharing(commits: Commit[]): number {
+    const sharingCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('doc') ||
+      commit.message.toLowerCase().includes('comment') ||
+      commit.message.toLowerCase().includes('readme') ||
+      commit.message.toLowerCase().includes('guide')
+    ).length;
+    
+    return Math.min((sharingCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateCodeReviewParticipation(commits: Commit[]): number {
+    const reviewCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('review') ||
+      commit.message.toLowerCase().includes('merge') ||
+      commit.message.toLowerCase().includes('pr') ||
+      commit.message.toLowerCase().includes('pull request')
+    ).length;
+    
+    return Math.min((reviewCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateMentorshipActivity(commits: Commit[]): number {
+    const mentorshipCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('help') ||
+      commit.message.toLowerCase().includes('guide') ||
+      commit.message.toLowerCase().includes('example') ||
+      commit.message.toLowerCase().includes('tutorial')
+    ).length;
+    
+    return Math.min((mentorshipCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateCommunicationFrequency(commits: Commit[]): number {
+    // Base communication frequency on commit message quality and frequency
+    const messageQuality = this.analyzeCommitMessageQuality(commits);
+    const commitFrequency = commits.length > 0 ? Math.min(commits.length / 30, 1) * 100 : 0;
+    
+    return (messageQuality + commitFrequency) / 2;
+  }
+
+  private calculateConflictResolution(commits: Commit[]): number {
+    const conflictCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('conflict') ||
+      commit.message.toLowerCase().includes('merge') ||
+      commit.message.toLowerCase().includes('resolve')
+    ).length;
+    
+    return Math.min((conflictCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateCodeComplexity(commits: Commit[]): number {
+    const complexityCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('refactor') ||
+      commit.message.toLowerCase().includes('simplify') ||
+      commit.message.toLowerCase().includes('cleanup')
+    ).length;
+    
+    return Math.min((complexityCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private detectDuplicateCode(commits: Commit[]): number {
+    const duplicateCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('duplicate') ||
+      commit.message.toLowerCase().includes('dry') ||
+      commit.message.toLowerCase().includes('reuse')
+    ).length;
+    
+    return Math.min((duplicateCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private countOutdatedDependencies(commits: Commit[]): number {
+    return commits.filter(commit => 
+      commit.message.toLowerCase().includes('update') ||
+      commit.message.toLowerCase().includes('upgrade') ||
+      commit.message.toLowerCase().includes('dependency')
+    ).length;
+  }
+
+  private detectUnusedCode(commits: Commit[]): number {
+    const cleanupCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('remove') ||
+      commit.message.toLowerCase().includes('cleanup') ||
+      commit.message.toLowerCase().includes('unused')
+    ).length;
+    
+    return Math.min((cleanupCommits / Math.max(commits.length, 1)) * 100, 100);
+  }
+
+  private calculateTestDebt(commits: Commit[]): number {
+    const testCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('test')
+    ).length;
+    
+    const testCoverage = Math.min((testCommits / Math.max(commits.length, 1)) * 100, 100);
+    return 100 - testCoverage; // Inverse of test coverage
+  }
+
+  private calculateDocumentationDebt(commits: Commit[]): number {
+    const docCommits = commits.filter(commit => 
+      commit.message.toLowerCase().includes('doc') ||
+      commit.message.toLowerCase().includes('readme') ||
+      commit.message.toLowerCase().includes('comment')
+    ).length;
+    
+    const docCoverage = Math.min((docCommits / Math.max(commits.length, 1)) * 100, 100);
+    return 100 - docCoverage; // Inverse of documentation coverage
+  }
+
+  private identifyRefactoringOpportunities(commits: Commit[]): string[] {
+    const opportunities: string[] = [];
+    
+    const fixCommits = commits.filter(c => c.message.toLowerCase().includes('fix')).length;
+    const refactorCommits = commits.filter(c => c.message.toLowerCase().includes('refactor')).length;
+    const testCommits = commits.filter(c => c.message.toLowerCase().includes('test')).length;
+    const docCommits = commits.filter(c => c.message.toLowerCase().includes('doc')).length;
+    
+    if (fixCommits > commits.length * 0.3) {
+      opportunities.push('High bug fix ratio suggests code quality improvements needed');
+    }
+    
+    if (refactorCommits < commits.length * 0.1) {
+      opportunities.push('Low refactoring activity - consider code structure improvements');
+    }
+    
+    if (testCommits < commits.length * 0.2) {
+      opportunities.push('Insufficient test coverage - add missing unit tests');
+    }
+    
+    if (docCommits < commits.length * 0.1) {
+      opportunities.push('Poor documentation coverage - improve code comments and documentation');
+    }
+    
+    return opportunities.length > 0 ? opportunities : ['Code appears well-maintained'];
   }
 }
 
