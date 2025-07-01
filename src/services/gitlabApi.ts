@@ -1,37 +1,32 @@
 
 import { Repository, Commit, ProcessedRepo, PlatformApiService } from './types';
 
-interface GitHubRepo {
+interface GitLabProject {
   id: number;
   name: string;
-  full_name: string;
+  name_with_namespace: string;
   description: string | null;
-  language: string | null;
-  stargazers_count: number;
+  star_count: number;
   forks_count: number;
   open_issues_count: number;
-  updated_at: string;
+  last_activity_at: string;
   created_at: string;
   topics: string[];
   archived: boolean;
-  private: boolean;
+  visibility: string;
   default_branch: string;
-  html_url: string;
+  web_url: string;
 }
 
-interface GitHubCommit {
-  sha: string;
-  commit: {
-    author: {
-      date: string;
-      name: string;
-    };
-    message: string;
-  };
+interface GitLabCommit {
+  id: string;
+  title: string;
+  created_at: string;
+  author_name: string;
 }
 
-class GitHubApiService implements PlatformApiService {
-  private baseUrl = 'https://api.github.com';
+class GitLabApiService implements PlatformApiService {
+  private baseUrl = 'https://gitlab.com/api/v4';
   private token: string | null = null;
 
   setToken(token: string) {
@@ -40,59 +35,61 @@ class GitHubApiService implements PlatformApiService {
 
   private async makeRequest(endpoint: string) {
     const headers: Record<string, string> = {
-      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
     };
 
     if (this.token) {
-      headers['Authorization'] = `token ${this.token}`;
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, { headers });
     
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(`GitLab API error: ${response.status} ${response.statusText}`);
     }
     
     return response.json();
   }
 
   async getUserRepos(username: string): Promise<Repository[]> {
-    const repos: GitHubRepo[] = await this.makeRequest(`/users/${username}/repos?sort=updated&per_page=100`);
-    return this.transformRepositories(repos);
+    const projects: GitLabProject[] = await this.makeRequest(`/users/${username}/projects?per_page=100&order_by=updated_at`);
+    return this.transformProjects(projects);
   }
 
   async getOrgRepos(orgName: string): Promise<Repository[]> {
-    const repos: GitHubRepo[] = await this.makeRequest(`/orgs/${orgName}/repos?sort=updated&per_page=100`);
-    return this.transformRepositories(repos);
+    const projects: GitLabProject[] = await this.makeRequest(`/groups/${orgName}/projects?per_page=100&order_by=updated_at`);
+    return this.transformProjects(projects);
   }
 
   async getRecentCommits(owner: string, repo: string): Promise<Commit[]> {
-    const commits: GitHubCommit[] = await this.makeRequest(`/repos/${owner}/${repo}/commits?per_page=10`);
+    const projectPath = encodeURIComponent(`${owner}/${repo}`);
+    const commits: GitLabCommit[] = await this.makeRequest(`/projects/${projectPath}/repository/commits?per_page=10`);
+    
     return commits.map(commit => ({
-      sha: commit.sha,
-      message: commit.commit.message,
-      date: commit.commit.author.date,
-      author: commit.commit.author.name
+      sha: commit.id,
+      message: commit.title,
+      date: commit.created_at,
+      author: commit.author_name
     }));
   }
 
-  private transformRepositories(repos: GitHubRepo[]): Repository[] {
-    return repos.map(repo => ({
-      id: repo.id.toString(),
-      name: repo.name,
-      fullName: repo.full_name,
-      description: repo.description,
-      language: repo.language,
-      stars: repo.stargazers_count,
-      forks: repo.forks_count,
-      issues: repo.open_issues_count,
-      updatedAt: repo.updated_at,
-      createdAt: repo.created_at,
-      topics: repo.topics || [],
-      archived: repo.archived,
-      private: repo.private,
-      defaultBranch: repo.default_branch,
-      url: repo.html_url
+  private transformProjects(projects: GitLabProject[]): Repository[] {
+    return projects.map(project => ({
+      id: project.id.toString(),
+      name: project.name,
+      fullName: project.name_with_namespace,
+      description: project.description,
+      language: null, // GitLab doesn't provide primary language in project list
+      stars: project.star_count,
+      forks: project.forks_count,
+      issues: project.open_issues_count,
+      updatedAt: project.last_activity_at,
+      createdAt: project.created_at,
+      topics: project.topics || [],
+      archived: project.archived,
+      private: project.visibility === 'private',
+      defaultBranch: project.default_branch,
+      url: project.web_url
     }));
   }
 
@@ -131,10 +128,10 @@ class GitHubApiService implements PlatformApiService {
         issues: repo.issues,
         isPrivate: repo.private,
         url: repo.url,
-        platform: 'github'
+        platform: 'gitlab'
       };
     });
   }
 }
 
-export const githubApi = new GitHubApiService();
+export const gitlabApi = new GitLabApiService();

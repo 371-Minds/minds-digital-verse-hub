@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, GitBranch, BarChart3, Github } from 'lucide-react';
+import { Building2, GitBranch, BarChart3, Globe } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import MonorepoStructure from './MonorepoStructure';
-import GitHubMonorepoStructure from './GitHubMonorepoStructure';
+import MultiPlatformStructure from './MultiPlatformStructure';
 import SetupStatus from './SetupStatus';
 
 const Dashboard = () => {
@@ -21,7 +21,7 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold">371 Minds Digital Empire</h1>
-              <p className="text-muted-foreground">Monorepo Management Dashboard</p>
+              <p className="text-muted-foreground">Multi-Platform Repository Management Dashboard</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -34,11 +34,11 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard */}
-        <Tabs defaultValue="github" className="space-y-6">
+        <Tabs defaultValue="multi-platform" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="github" className="flex items-center space-x-2">
-              <Github className="h-4 w-4" />
-              <span>GitHub Repos</span>
+            <TabsTrigger value="multi-platform" className="flex items-center space-x-2">
+              <Globe className="h-4 w-4" />
+              <span>Multi-Platform</span>
             </TabsTrigger>
             <TabsTrigger value="structure" className="flex items-center space-x-2">
               <Building2 className="h-4 w-4" />
@@ -54,8 +54,8 @@ const Dashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="github">
-            <GitHubMonorepoStructure />
+          <TabsContent value="multi-platform">
+            <MultiPlatformStructure />
           </TabsContent>
 
           <TabsContent value="structure">

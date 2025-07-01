@@ -1,37 +1,33 @@
 
 import { Repository, Commit, ProcessedRepo, PlatformApiService } from './types';
 
-interface GitHubRepo {
-  id: number;
+interface BitbucketRepository {
+  uuid: string;
   name: string;
   full_name: string;
   description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  open_issues_count: number;
-  updated_at: string;
-  created_at: string;
-  topics: string[];
-  archived: boolean;
-  private: boolean;
-  default_branch: string;
-  html_url: string;
-}
-
-interface GitHubCommit {
-  sha: string;
-  commit: {
-    author: {
-      date: string;
-      name: string;
+  language: string;
+  updated_on: string;
+  created_on: string;
+  is_private: boolean;
+  links: {
+    html: {
+      href: string;
     };
-    message: string;
   };
 }
 
-class GitHubApiService implements PlatformApiService {
-  private baseUrl = 'https://api.github.com';
+interface BitbucketCommit {
+  hash: string;
+  message: string;
+  date: string;
+  author: {
+    raw: string;
+  };
+}
+
+class BitbucketApiService implements PlatformApiService {
+  private baseUrl = 'https://api.bitbucket.org/2.0';
   private token: string | null = null;
 
   setToken(token: string) {
@@ -40,59 +36,61 @@ class GitHubApiService implements PlatformApiService {
 
   private async makeRequest(endpoint: string) {
     const headers: Record<string, string> = {
-      'Accept': 'application/vnd.github.v3+json',
+      'Accept': 'application/json',
     };
 
     if (this.token) {
-      headers['Authorization'] = `token ${this.token}`;
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, { headers });
     
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Bitbucket API error: ${response.status} ${response.statusText}`);
     }
     
     return response.json();
   }
 
   async getUserRepos(username: string): Promise<Repository[]> {
-    const repos: GitHubRepo[] = await this.makeRequest(`/users/${username}/repos?sort=updated&per_page=100`);
-    return this.transformRepositories(repos);
+    const data = await this.makeRequest(`/repositories/${username}?pagelen=100&sort=-updated_on`);
+    return this.transformRepositories(data.values || []);
   }
 
   async getOrgRepos(orgName: string): Promise<Repository[]> {
-    const repos: GitHubRepo[] = await this.makeRequest(`/orgs/${orgName}/repos?sort=updated&per_page=100`);
-    return this.transformRepositories(repos);
+    const data = await this.makeRequest(`/repositories/${orgName}?pagelen=100&sort=-updated_on`);
+    return this.transformRepositories(data.values || []);
   }
 
   async getRecentCommits(owner: string, repo: string): Promise<Commit[]> {
-    const commits: GitHubCommit[] = await this.makeRequest(`/repos/${owner}/${repo}/commits?per_page=10`);
+    const data = await this.makeRequest(`/repositories/${owner}/${repo}/commits?pagelen=10`);
+    const commits: BitbucketCommit[] = data.values || [];
+    
     return commits.map(commit => ({
-      sha: commit.sha,
-      message: commit.commit.message,
-      date: commit.commit.author.date,
-      author: commit.commit.author.name
+      sha: commit.hash,
+      message: commit.message.split('\n')[0], // First line only
+      date: commit.date,
+      author: commit.author.raw
     }));
   }
 
-  private transformRepositories(repos: GitHubRepo[]): Repository[] {
-    return repos.map(repo => ({
-      id: repo.id.toString(),
+  private transformRepositories(repositories: BitbucketRepository[]): Repository[] {
+    return repositories.map(repo => ({
+      id: repo.uuid,
       name: repo.name,
       fullName: repo.full_name,
       description: repo.description,
       language: repo.language,
-      stars: repo.stargazers_count,
-      forks: repo.forks_count,
-      issues: repo.open_issues_count,
-      updatedAt: repo.updated_at,
-      createdAt: repo.created_at,
-      topics: repo.topics || [],
-      archived: repo.archived,
-      private: repo.private,
-      defaultBranch: repo.default_branch,
-      url: repo.html_url
+      stars: 0, // Bitbucket doesn't have stars
+      forks: 0, // Would need separate API call
+      issues: 0, // Would need separate API call
+      updatedAt: repo.updated_on,
+      createdAt: repo.created_on,
+      topics: [],
+      archived: false,
+      private: repo.is_private,
+      defaultBranch: 'main', // Would need separate API call
+      url: repo.links.html.href
     }));
   }
 
@@ -116,9 +114,6 @@ class GitHubApiService implements PlatformApiService {
       if (repo.language) {
         technologies.push(repo.language);
       }
-      if (repo.topics) {
-        technologies.push(...repo.topics);
-      }
 
       return {
         name: repo.name,
@@ -131,10 +126,10 @@ class GitHubApiService implements PlatformApiService {
         issues: repo.issues,
         isPrivate: repo.private,
         url: repo.url,
-        platform: 'github'
+        platform: 'bitbucket'
       };
     });
   }
 }
 
-export const githubApi = new GitHubApiService();
+export const bitbucketApi = new BitbucketApiService();
