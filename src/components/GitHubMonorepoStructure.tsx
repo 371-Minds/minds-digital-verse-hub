@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, Star, GitFork, AlertCircle, Lock } from 'lucide-react';
-import { githubApi, ProcessedRepo } from '../services/githubApi';
+import { githubApi } from '../services/githubApi';
+import { ProcessedRepo } from '../services/types';
 import GitHubSettings from './GitHubSettings';
 
 interface GroupedRepos {

@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, GitBranch, BarChart3, Globe } from 'lucide-react';
+import { Building2, GitBranch, BarChart3, Globe, Activity } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import MonorepoStructure from './MonorepoStructure';
 import MultiPlatformStructure from './MultiPlatformStructure';
+import BehavioralIntelligenceDashboard from './BehavioralIntelligenceDashboard';
 import SetupStatus from './SetupStatus';
 
 const Dashboard = () => {
@@ -34,8 +35,12 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard */}
-        <Tabs defaultValue="multi-platform" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="behavioral" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="behavioral" className="flex items-center space-x-2">
+              <Activity className="h-4 w-4" />
+              <span>Behavioral Intelligence</span>
+            </TabsTrigger>
             <TabsTrigger value="multi-platform" className="flex items-center space-x-2">
               <Globe className="h-4 w-4" />
               <span>Multi-Platform</span>
@@ -53,6 +58,10 @@ const Dashboard = () => {
               <span>Analytics</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="behavioral">
+            <BehavioralIntelligenceDashboard />
+          </TabsContent>
 
           <TabsContent value="multi-platform">
             <MultiPlatformStructure />
